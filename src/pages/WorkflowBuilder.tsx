@@ -60,7 +60,7 @@ const availablePieces = [
 ]
 
 // Custom Node Component
-function WorkflowNode({ data, selected, onAdvancedSettings }: { data: NodeData; selected: boolean; onAdvancedSettings?: () => void }) {
+function WorkflowNode({ data, selected, onAdvancedSettings, onCloseInline }: { data: NodeData; selected: boolean; onAdvancedSettings?: () => void; onCloseInline?: () => void }) {
   const piece = availablePieces.find(p => p.type === data.type) || availablePieces[0]
   const Icon = piece.icon
   
@@ -189,10 +189,16 @@ function WorkflowNode({ data, selected, onAdvancedSettings }: { data: NodeData; 
               <Settings className="w-3 h-3" />
               Advanced
             </button>
-            <button className="flex-1 px-3 py-1.5 bg-[#39FF14] text-[#020429] rounded text-xs font-semibold hover:bg-[#39FF14]/80 transition-colors">
+            <button 
+              onClick={onCloseInline}
+              className="flex-1 px-3 py-1.5 bg-[#39FF14] text-[#020429] rounded text-xs font-semibold hover:bg-[#39FF14]/80 transition-colors"
+            >
               Save
             </button>
-            <button className="px-3 py-1.5 bg-[#F2F2F2] text-[#666] rounded text-xs font-semibold hover:bg-[#E2E0F1] transition-colors">
+            <button 
+              onClick={onCloseInline}
+              className="px-3 py-1.5 bg-[#F2F2F2] text-[#666] rounded text-xs font-semibold hover:bg-[#E2E0F1] transition-colors"
+            >
               ✕
             </button>
           </div>
@@ -236,15 +242,30 @@ export default function WorkflowBuilder() {
     )
   }, [variantMode, setNodes])
 
+  // Close inline edit mode
+  const closeInlineEdit = useCallback(() => {
+    setSelectedNode(null)
+    setNodes((nds: any) =>
+      nds.map((n: any) => ({
+        ...n,
+        data: {
+          ...n.data,
+          inlineExpanded: false,
+        },
+      }))
+    )
+  }, [setNodes])
+
   // Create nodeTypes with callback - memoized to prevent re-renders
   const nodeTypes: NodeTypes = useMemo(() => ({
     workflow: (props: any) => (
       <WorkflowNode 
         {...props} 
         onAdvancedSettings={() => setShowAdvancedSettings(true)}
+        onCloseInline={closeInlineEdit}
       />
     ),
-  }), [])
+  }), [closeInlineEdit])
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge({ 
@@ -1173,7 +1194,10 @@ export default function WorkflowBuilder() {
                 >
                   Cancel
                 </button>
-                <button className="px-4 py-2 bg-[#39FF14] text-[#020429] rounded-lg hover:bg-[#39FF14]/80 transition-colors text-sm font-semibold">
+                <button 
+                  onClick={() => setSelectedNode(null)}
+                  className="px-4 py-2 bg-[#39FF14] text-[#020429] rounded-lg hover:bg-[#39FF14]/80 transition-colors text-sm font-semibold"
+                >
                   Save Changes
                 </button>
               </div>
