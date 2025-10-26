@@ -1,4 +1,4 @@
-import { useCallback, useState, DragEvent } from 'react'
+import { useCallback, useState, DragEvent, useMemo, useEffect } from 'react'
 import ReactFlow, {
   Node,
   Controls,
@@ -60,7 +60,7 @@ const availablePieces = [
 ]
 
 // Custom Node Component
-function WorkflowNode({ data, selected }: { data: NodeData; selected: boolean }) {
+function WorkflowNode({ data, selected, onAdvancedSettings }: { data: NodeData; selected: boolean; onAdvancedSettings?: () => void }) {
   const piece = availablePieces.find(p => p.type === data.type) || availablePieces[0]
   const Icon = piece.icon
   
@@ -103,7 +103,11 @@ function WorkflowNode({ data, selected }: { data: NodeData; selected: boolean })
 
       {/* Inline Expanded Form */}
       {showInlineForm && (
-        <div className="p-3 space-y-3 max-h-[400px] overflow-y-auto">
+        <div 
+          className="p-3 space-y-3 max-h-[400px] overflow-y-auto"
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="text-xs font-semibold text-[#39FF14] mb-2">
             ▼ Inline Edit Mode
           </div>
@@ -178,11 +182,18 @@ function WorkflowNode({ data, selected }: { data: NodeData; selected: boolean })
           )}
 
           <div className="flex gap-2 pt-2 border-t border-[#E2E0F1]">
+            <button 
+              onClick={onAdvancedSettings}
+              className="flex-1 px-3 py-1.5 bg-[#020429] text-white rounded text-xs font-semibold hover:bg-[#39FF14] hover:text-[#020429] transition-colors flex items-center justify-center gap-1"
+            >
+              <Settings className="w-3 h-3" />
+              Advanced
+            </button>
             <button className="flex-1 px-3 py-1.5 bg-[#39FF14] text-[#020429] rounded text-xs font-semibold hover:bg-[#39FF14]/80 transition-colors">
               Save
             </button>
             <button className="px-3 py-1.5 bg-[#F2F2F2] text-[#666] rounded text-xs font-semibold hover:bg-[#E2E0F1] transition-colors">
-              Cancel
+              ✕
             </button>
           </div>
         </div>
@@ -198,10 +209,6 @@ function WorkflowNode({ data, selected }: { data: NodeData; selected: boolean })
   )
 }
 
-const nodeTypes: NodeTypes = {
-  workflow: WorkflowNode,
-}
-
 type VariantMode = 'side-panel' | 'inline' | 'modal'
 
 export default function WorkflowBuilder() {
@@ -212,6 +219,32 @@ export default function WorkflowBuilder() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [variantMode, setVariantMode] = useState<VariantMode>('side-panel')
+  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false)
+  const [modalActiveTab, setModalActiveTab] = useState<'settings' | 'advanced' | 'mapping' | 'testing'>('settings')
+
+  // Reset selected node and collapse all nodes when switching variant modes
+  useEffect(() => {
+    setSelectedNode(null)
+    setNodes((nds: any) =>
+      nds.map((n: any) => ({
+        ...n,
+        data: {
+          ...n.data,
+          inlineExpanded: false,
+        },
+      }))
+    )
+  }, [variantMode, setNodes])
+
+  // Create nodeTypes with callback - memoized to prevent re-renders
+  const nodeTypes: NodeTypes = useMemo(() => ({
+    workflow: (props: any) => (
+      <WorkflowNode 
+        {...props} 
+        onAdvancedSettings={() => setShowAdvancedSettings(true)}
+      />
+    ),
+  }), [])
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge({ 
@@ -254,6 +287,7 @@ export default function WorkflowBuilder() {
     } else if (variantMode === 'modal') {
       // Open modal
       setSelectedNode(node)
+      setModalActiveTab('settings') // Reset to settings tab
     } else {
       // Side panel mode
       setSelectedNode(node)
@@ -799,7 +833,10 @@ export default function WorkflowBuilder() {
 
               {/* Actions */}
               <div className="mt-6 space-y-2">
-                <button className="w-full px-4 py-2 bg-[#020429] text-white rounded hover:bg-[#39FF14] hover:text-[#020429] transition-colors text-sm font-semibold flex items-center justify-center gap-2">
+                <button 
+                  onClick={() => setShowAdvancedSettings(true)}
+                  className="w-full px-4 py-2 bg-[#020429] text-white rounded hover:bg-[#39FF14] hover:text-[#020429] transition-colors text-sm font-semibold flex items-center justify-center gap-2"
+                >
                   <Settings size={14} />
                   Advanced Settings
                 </button>
@@ -848,16 +885,44 @@ export default function WorkflowBuilder() {
             {/* Modal Tabs */}
             <div className="border-b border-[#E2E0F1] bg-[#F2F2F2]">
               <div className="flex gap-1 px-6">
-                <button className="px-4 py-3 text-sm font-semibold text-[#020429] bg-white border-b-2 border-[#39FF14]">
+                <button 
+                  onClick={() => setModalActiveTab('settings')}
+                  className={`px-4 py-3 text-sm font-semibold transition-colors ${
+                    modalActiveTab === 'settings'
+                      ? 'text-[#020429] bg-white border-b-2 border-[#39FF14]'
+                      : 'text-[#666] hover:text-[#020429]'
+                  }`}
+                >
                   ⚙️ Settings
                 </button>
-                <button className="px-4 py-3 text-sm font-semibold text-[#666] hover:text-[#020429] transition-colors">
+                <button 
+                  onClick={() => setModalActiveTab('advanced')}
+                  className={`px-4 py-3 text-sm font-semibold transition-colors ${
+                    modalActiveTab === 'advanced'
+                      ? 'text-[#020429] bg-white border-b-2 border-[#39FF14]'
+                      : 'text-[#666] hover:text-[#020429]'
+                  }`}
+                >
                   🔧 Advanced
                 </button>
-                <button className="px-4 py-3 text-sm font-semibold text-[#666] hover:text-[#020429] transition-colors">
+                <button 
+                  onClick={() => setModalActiveTab('mapping')}
+                  className={`px-4 py-3 text-sm font-semibold transition-colors ${
+                    modalActiveTab === 'mapping'
+                      ? 'text-[#020429] bg-white border-b-2 border-[#39FF14]'
+                      : 'text-[#666] hover:text-[#020429]'
+                  }`}
+                >
                   🔀 Data Mapping
                 </button>
-                <button className="px-4 py-3 text-sm font-semibold text-[#666] hover:text-[#020429] transition-colors">
+                <button 
+                  onClick={() => setModalActiveTab('testing')}
+                  className={`px-4 py-3 text-sm font-semibold transition-colors ${
+                    modalActiveTab === 'testing'
+                      ? 'text-[#020429] bg-white border-b-2 border-[#39FF14]'
+                      : 'text-[#666] hover:text-[#020429]'
+                  }`}
+                >
                   📊 Testing
                 </button>
               </div>
@@ -865,7 +930,9 @@ export default function WorkflowBuilder() {
 
             {/* Modal Content */}
             <div className="flex-1 overflow-y-auto p-6">
-              <div className="grid grid-cols-2 gap-6">
+              {/* Settings Tab */}
+              {modalActiveTab === 'settings' && (
+                <div className="grid grid-cols-2 gap-6">
                 {/* Left Column */}
                 <div className="space-y-4">
                   <div>
@@ -954,6 +1021,140 @@ export default function WorkflowBuilder() {
                   </div>
                 </div>
               </div>
+              )}
+
+              {/* Advanced Tab */}
+              {modalActiveTab === 'advanced' && (
+                <div className="space-y-6 max-w-4xl">
+                  {/* Error Handling */}
+                  <div className="border border-[#E2E0F1] rounded-lg p-4">
+                    <h3 className="text-sm font-bold text-[#020429] mb-3 flex items-center gap-2">
+                      ⚠️ Error Handling
+                    </h3>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-[#020429] mb-2">On Failure</label>
+                        <select className="w-full px-3 py-2 text-sm border border-[#E2E0F1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#39FF14]">
+                          <option>Stop Workflow</option>
+                          <option>Continue to Next Node</option>
+                          <option>Retry with Exponential Backoff</option>
+                          <option>Go to Error Handler</option>
+                        </select>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-semibold text-[#020429] mb-2">Max Retries</label>
+                          <input type="number" defaultValue="3" className="w-full px-3 py-2 text-sm border border-[#E2E0F1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#39FF14]" />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-[#020429] mb-2">Retry Delay (ms)</label>
+                          <input type="number" defaultValue="1000" className="w-full px-3 py-2 text-sm border border-[#E2E0F1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#39FF14]" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Performance & Resources */}
+                  <div className="border border-[#E2E0F1] rounded-lg p-4">
+                    <h3 className="text-sm font-bold text-[#020429] mb-3 flex items-center gap-2">
+                      ⚡ Performance & Resources
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-semibold text-[#020429] mb-2">Memory Limit (MB)</label>
+                          <input type="number" defaultValue="512" className="w-full px-3 py-2 text-sm border border-[#E2E0F1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#39FF14]" />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-[#020429] mb-2">CPU Limit (%)</label>
+                          <input type="number" defaultValue="100" className="w-full px-3 py-2 text-sm border border-[#E2E0F1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#39FF14]" />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-[#020429] mb-2">Execution Priority</label>
+                        <select className="w-full px-3 py-2 text-sm border border-[#E2E0F1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#39FF14]">
+                          <option>Low</option>
+                          <option>Normal</option>
+                          <option>High</option>
+                          <option>Critical</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Logging & Monitoring */}
+                  <div className="border border-[#E2E0F1] rounded-lg p-4">
+                    <h3 className="text-sm font-bold text-[#020429] mb-3 flex items-center gap-2">
+                      📊 Logging & Monitoring
+                    </h3>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-[#020429] mb-2">Log Level</label>
+                        <select className="w-full px-3 py-2 text-sm border border-[#E2E0F1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#39FF14]">
+                          <option>None</option>
+                          <option>Error</option>
+                          <option>Warning</option>
+                          <option>Info</option>
+                          <option>Debug</option>
+                          <option>Trace</option>
+                        </select>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input type="checkbox" id="enableMetrics" defaultChecked className="w-4 h-4 text-[#39FF14] border-[#E2E0F1] rounded focus:ring-[#39FF14]" />
+                        <label htmlFor="enableMetrics" className="text-sm text-[#020429]">Enable Performance Metrics</label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input type="checkbox" id="enableTracing" defaultChecked className="w-4 h-4 text-[#39FF14] border-[#E2E0F1] rounded focus:ring-[#39FF14]" />
+                        <label htmlFor="enableTracing" className="text-sm text-[#020429]">Enable Distributed Tracing</label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Environment Variables */}
+                  <div className="border border-[#E2E0F1] rounded-lg p-4">
+                    <h3 className="text-sm font-bold text-[#020429] mb-3 flex items-center gap-2">
+                      🔐 Environment Variables
+                    </h3>
+                    <div className="space-y-2">
+                      <textarea placeholder={'KEY1=value1\nKEY2=value2\nAPI_SECRET=***'} rows={4} className="w-full px-3 py-2 text-sm border border-[#E2E0F1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#39FF14] font-mono" />
+                      <p className="text-xs text-[#666]">💡 One variable per line, format: KEY=value</p>
+                    </div>
+                  </div>
+
+                  {/* Node Control */}
+                  <div className="border border-[#E2E0F1] rounded-lg p-4 bg-[#F2F2F2]">
+                    <h3 className="text-sm font-bold text-[#020429] mb-3 flex items-center gap-2">
+                      🔧 Node Control
+                    </h3>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-semibold text-[#020429]">Node Enabled</p>
+                        <p className="text-xs text-[#666]">Disable to skip this node during execution</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" defaultChecked className="sr-only peer" />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#39FF14] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#39FF14]"></div>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Data Mapping Tab */}
+              {modalActiveTab === 'mapping' && (
+                <div className="text-center py-12">
+                  <p className="text-lg font-semibold text-[#020429] mb-2">🔀 Data Mapping</p>
+                  <p className="text-sm text-[#666]">Map data between nodes (Coming soon)</p>
+                </div>
+              )}
+
+              {/* Testing Tab */}
+              {modalActiveTab === 'testing' && (
+                <div className="text-center py-12">
+                  <p className="text-lg font-semibold text-[#020429] mb-2">📊 Testing</p>
+                  <p className="text-sm text-[#666]">Test node configuration (Coming soon)</p>
+                </div>
+              )}
             </div>
 
             {/* Modal Footer */}
@@ -976,6 +1177,226 @@ export default function WorkflowBuilder() {
                   Save Changes
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Advanced Settings Modal */}
+      {showAdvancedSettings && selectedNode && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-8">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[85vh] overflow-hidden flex flex-col">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-[#020429] to-[#1a1d4a] px-6 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-[#39FF14] rounded-lg flex items-center justify-center">
+                  <Settings className="w-5 h-5 text-[#020429]" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-white">Advanced Settings</h2>
+                  <p className="text-xs text-[#E2E0F1]">{selectedNode.data.label}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAdvancedSettings(false)}
+                className="text-white hover:text-[#39FF14] transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="space-y-6">
+                {/* Error Handling */}
+                <div className="border border-[#E2E0F1] rounded-lg p-4">
+                  <h3 className="text-sm font-bold text-[#020429] mb-3 flex items-center gap-2">
+                    ⚠️ Error Handling
+                  </h3>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-[#020429] mb-2">On Failure</label>
+                      <select className="w-full px-3 py-2 text-sm border border-[#E2E0F1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#39FF14]">
+                        <option>Stop Workflow</option>
+                        <option>Continue to Next Node</option>
+                        <option>Retry with Exponential Backoff</option>
+                        <option>Go to Error Handler</option>
+                      </select>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-[#020429] mb-2">Max Retries</label>
+                        <input
+                          type="number"
+                          defaultValue="3"
+                          className="w-full px-3 py-2 text-sm border border-[#E2E0F1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#39FF14]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-[#020429] mb-2">Retry Delay (ms)</label>
+                        <input
+                          type="number"
+                          defaultValue="1000"
+                          className="w-full px-3 py-2 text-sm border border-[#E2E0F1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#39FF14]"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Performance & Resources */}
+                <div className="border border-[#E2E0F1] rounded-lg p-4">
+                  <h3 className="text-sm font-bold text-[#020429] mb-3 flex items-center gap-2">
+                    ⚡ Performance & Resources
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-[#020429] mb-2">Memory Limit (MB)</label>
+                        <input
+                          type="number"
+                          defaultValue="512"
+                          className="w-full px-3 py-2 text-sm border border-[#E2E0F1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#39FF14]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-[#020429] mb-2">CPU Limit (%)</label>
+                        <input
+                          type="number"
+                          defaultValue="100"
+                          className="w-full px-3 py-2 text-sm border border-[#E2E0F1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#39FF14]"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-[#020429] mb-2">Execution Priority</label>
+                      <select className="w-full px-3 py-2 text-sm border border-[#E2E0F1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#39FF14]">
+                        <option>Low</option>
+                        <option>Normal</option>
+                        <option>High</option>
+                        <option>Critical</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Logging & Monitoring */}
+                <div className="border border-[#E2E0F1] rounded-lg p-4">
+                  <h3 className="text-sm font-bold text-[#020429] mb-3 flex items-center gap-2">
+                    📊 Logging & Monitoring
+                  </h3>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-[#020429] mb-2">Log Level</label>
+                      <select className="w-full px-3 py-2 text-sm border border-[#E2E0F1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#39FF14]">
+                        <option>None</option>
+                        <option>Error</option>
+                        <option>Warning</option>
+                        <option>Info</option>
+                        <option>Debug</option>
+                        <option>Trace</option>
+                      </select>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="enableMetrics"
+                        defaultChecked
+                        className="w-4 h-4 text-[#39FF14] border-[#E2E0F1] rounded focus:ring-[#39FF14]"
+                      />
+                      <label htmlFor="enableMetrics" className="text-sm text-[#020429]">
+                        Enable Performance Metrics
+                      </label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="enableTracing"
+                        defaultChecked
+                        className="w-4 h-4 text-[#39FF14] border-[#E2E0F1] rounded focus:ring-[#39FF14]"
+                      />
+                      <label htmlFor="enableTracing" className="text-sm text-[#020429]">
+                        Enable Distributed Tracing
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Scheduling & Triggers */}
+                <div className="border border-[#E2E0F1] rounded-lg p-4">
+                  <h3 className="text-sm font-bold text-[#020429] mb-3 flex items-center gap-2">
+                    ⏰ Scheduling & Triggers
+                  </h3>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-[#020429] mb-2">Execution Mode</label>
+                      <select className="w-full px-3 py-2 text-sm border border-[#E2E0F1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#39FF14]">
+                        <option>Run Once</option>
+                        <option>Scheduled (Cron)</option>
+                        <option>Event Triggered</option>
+                        <option>Webhook</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-[#020429] mb-2">Cron Expression</label>
+                      <input
+                        type="text"
+                        placeholder="0 0 * * *"
+                        className="w-full px-3 py-2 text-sm border border-[#E2E0F1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#39FF14] font-mono"
+                      />
+                      <p className="text-xs text-[#666] mt-1">💡 Daily at midnight</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Environment Variables */}
+                <div className="border border-[#E2E0F1] rounded-lg p-4">
+                  <h3 className="text-sm font-bold text-[#020429] mb-3 flex items-center gap-2">
+                    🔐 Environment Variables
+                  </h3>
+                  <div className="space-y-2">
+                    <textarea
+                      placeholder={'KEY1=value1\nKEY2=value2\nAPI_SECRET=***'}
+                      rows={4}
+                      className="w-full px-3 py-2 text-sm border border-[#E2E0F1] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#39FF14] font-mono"
+                    />
+                    <p className="text-xs text-[#666]">💡 One variable per line, format: KEY=value</p>
+                  </div>
+                </div>
+
+                {/* Node Status */}
+                <div className="border border-[#E2E0F1] rounded-lg p-4 bg-[#F2F2F2]">
+                  <h3 className="text-sm font-bold text-[#020429] mb-3 flex items-center gap-2">
+                    🔧 Node Control
+                  </h3>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-[#020429]">Node Enabled</p>
+                      <p className="text-xs text-[#666]">Disable to skip this node during execution</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input type="checkbox" defaultChecked className="sr-only peer" />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#39FF14] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#39FF14]"></div>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="border-t border-[#E2E0F1] px-6 py-4 bg-[#F2F2F2] flex items-center justify-between">
+              <button
+                onClick={() => setShowAdvancedSettings(false)}
+                className="px-4 py-2 bg-white text-[#666] rounded-lg hover:bg-[#E2E0F1] transition-colors text-sm font-semibold"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => setShowAdvancedSettings(false)}
+                className="px-6 py-2 bg-[#39FF14] text-[#020429] rounded-lg hover:bg-[#39FF14]/80 transition-colors text-sm font-semibold"
+              >
+                Save Advanced Settings
+              </button>
             </div>
           </div>
         </div>
