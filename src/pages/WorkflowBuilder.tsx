@@ -60,7 +60,7 @@ const availablePieces = [
 ]
 
 // Custom Node Component
-function WorkflowNode({ data, selected, id }: { data: NodeData; selected: boolean; id: string }) {
+function WorkflowNode({ data, selected }: { data: NodeData; selected: boolean }) {
   const piece = availablePieces.find(p => p.type === data.type) || availablePieces[0]
   const Icon = piece.icon
   
