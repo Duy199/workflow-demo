@@ -5,8 +5,8 @@ import WorkflowBuilder from './pages/WorkflowBuilder'
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/builder" element={<WorkflowBuilder />} />
+      {/* <Route path="/" element={<Home />} /> */}
+      <Route path="/" element={<WorkflowBuilder />} />
     </Routes>
   )
 }
