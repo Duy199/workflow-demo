@@ -89,7 +89,7 @@ export default function Home() {
               rel="noopener noreferrer"
               className="text-[#39FF14] hover:underline inline-flex items-center gap-1"
             >
-              Domino (Activepieces)
+              Domino
               <Github className="w-3 h-3" />
             </a>
             {' '}• Built with React Flow & Tailwind CSS
