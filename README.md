@@ -4,17 +4,26 @@
 **Date:** October 26, 2025  
 **Purpose:** Monday Presentation - Workflow Node Interaction Design Concepts
 
+**Design Inspiration:** [Domino Workflow Platform](https://github.com/Tauffer-Consulting/domino) - Open source workflow management with intuitive GUI
+
 ---
 
 ## 🎯 Project Overview
 
-This project presents **3 interactive UX variants** for The Customization Group's workflow node designer. Each variant explores different approaches to node interaction, settings management, and workflow visualization.
+This project presents **3 interactive UX variants** for The Customization Group's workflow node designer. Each variant is inspired by the **Domino workflow platform**, adapting their proven UX patterns while maintaining TCG brand identity.
+
+### Key Domino Concepts Adapted:
+- 📦 **Left Sidebar** - Pieces/nodes library for drag-and-drop
+- 🎨 **Large Canvas** - Workflow building area with visual connections
+- ⚙️ **Properties Panel** - Right-side configuration when nodes selected
+- 🔄 **Visual Data Flow** - Animated connections showing workflow logic
+- 🎯 **Clean Modern UI** - Professional, intuitive interface
 
 Built with:
 - **Vite** - Lightning fast build tool
 - **React 18** + TypeScript
 - **React Router** for navigation
-- **React Flow** for node/edge management
+- **React Flow** for node/edge management (same as Domino)
 - **Tailwind CSS** for styling
 - **TCG Brand Guidelines** compliance
 
@@ -39,53 +48,43 @@ All variants strictly follow the **TCG Brand Book 2025** guidelines:
 
 ## 📋 Variant Comparisons
 
-| Feature | Variant 1: Compact | Variant 2: Detailed | Variant 3: Canvas |
-|---------|-------------------|---------------------|-------------------|
-| **Editing Style** | Inline forms | Side panel | Click to configure |
-| **Space Usage** | Minimal footprint | Split view | Full canvas |
-| **Settings Visibility** | Collapsible | Always accessible | On-demand |
-| **Best For** | Quick edits | Power users | Visual planning |
-| **Complexity** | Low | Medium | High |
-| **Learning Curve** | Fast | Moderate | Steeper |
+| Feature | Variant 1: Domino Compact | Variant 2: Domino Properties | Variant 3: Domino Canvas |
+|---------|---------------------------|------------------------------|--------------------------|
+| **Layout** | 3-panel (sidebar-canvas-info) | 3-panel (sidebar-canvas-properties) | Full Domino layout |
+| **Editing Style** | Inline expandable | Side panel detailed | Drag-drop + properties |
+| **Pieces Library** | Left sidebar | Left sidebar | Left sidebar with search |
+| **Node Style** | Compact with icons | Summary cards | Icon-based compact |
+| **Best For** | Quick edits | Detailed config | Full workflow building |
+| **Domino Match** | ⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
 
 ---
 
-## 🔵 Variant 1: Compact Node View
+## 🔵 Variant 1: Domino-Style Compact View
 
 ### Concept
-**"Inline Editing with Collapsible Sections"**
+**"Domino-Inspired 3-Panel Layout with Inline Editing"**
 
-Settings are integrated directly into each node with expandable/collapsible sections for advanced options.
+Adapts Domino's proven layout: pieces library sidebar, large canvas, and expandable node settings.
 
 ### Key Features
-- ✅ **Inline Form Fields** - Edit settings directly in the node
-- ✅ **Collapsible Sections** - Expand/collapse for more settings
-- ✅ **Minimal Footprint** - Compact design saves canvas space
-- ✅ **Quick Access** - No need to open separate panels
-- ✅ **Visual Status** - Color-coded headers and status badges
+- ✅ **3-Panel Layout** - Sidebar, canvas, info (Domino pattern)
+- ✅ **Pieces Library** - Left sidebar with draggable node templates
+- ✅ **Icon-Based Nodes** - Clean visual identification
+- ✅ **Inline Expansion** - Click chevron to expand settings
+- ✅ **Quick Configuration** - Most settings accessible without leaving canvas
+- ✅ **TCG Branded** - Royal Blue + Neon Green color scheme
 
 ### UX Rationale
-- **Speed:** Immediate access to most common settings
-- **Context:** Settings remain visually connected to the node
-- **Flexibility:** Can show/hide advanced options as needed
-- **Simplicity:** Reduces cognitive load with progressive disclosure
+- **Familiar Pattern:** Uses proven Domino UX that workflow users already understand
+- **Efficient:** Quick access to both node library and canvas
+- **Clean:** Nodes stay compact until you need to configure them
+- **Visual:** Icons help identify node types at a glance
 
-### Interactions
-1. Click **chevron** icon to expand/collapse advanced settings
-2. Edit fields **directly** in the node
-3. **Toggle switches** for boolean settings
-4. **Action buttons** for advanced config and testing
-
-### Use Cases
-- Quick workflow adjustments
-- Simple node configurations
-- Users who prefer minimal UI
-- Mobile/tablet interfaces (future consideration)
-
-### Limitations
-- Limited space for complex settings
-- May feel cramped with many fields
-- Less suitable for power users who need constant access to all settings
+### Domino Influence
+- Left sidebar pieces library (🎯 Domino core feature)
+- Expandable nodes with integrated forms
+- Clean, modern aesthetic
+- Icon-based node identification
 
 ---
 
